@@ -1,3 +1,2 @@
-// Configuração do Supabase — preenchido após criar o projeto
-const SUPABASE_URL      = 'SUPABASE_URL_AQUI';
-const SUPABASE_ANON_KEY = 'SUPABASE_ANON_KEY_AQUI';
+const SUPABASE_URL      = 'https://kmwzvurwreiyljutmvdc.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imttd3p2dXJ3cmVpeWxqdXRtdmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNjA3NzEsImV4cCI6MjA5NjkzNjc3MX0.dqP_g4NXITF5YlBBXCu2EkFznTHQPwgJV65oj5eUnvI';
