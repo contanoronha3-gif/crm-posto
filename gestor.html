@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#1a1a2e" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>CRM Posto — Gestor</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #1a1a2e; --accent: #e94560;
+      --bg: #f4f6f9; --card: #fff;
+      --text: #1a1a2e; --muted: #6b7280;
+      --border: #e5e7eb; --radius: 12px;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; }
+    header { background: var(--primary); color: #fff; padding: 20px 24px 16px; display: flex; align-items: center; justify-content: space-between; }
+    header h1 { font-size: 1.1rem; font-weight: 700; }
+    header p { font-size: .75rem; opacity: .65; margin-top: 2px; }
+    .btn-sair { background: rgba(255,255,255,.15); border: none; color: #fff; font-size: .78rem; font-weight: 600; border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+    .tabs { display: flex; background: #fff; border-bottom: 1px solid var(--border); overflow-x: auto; }
+    .tab { flex: 1; min-width: 100px; padding: 14px 10px; text-align: center; font-size: .82rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all .2s; }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    main { padding: 20px 16px; max-width: 700px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+    .card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .card h2 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; }
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .stat-chip { background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 10px; padding: 12px; text-align: center; }
+    .stat-chip .num { font-size: 1.8rem; font-weight: 800; color: #16a34a; line-height: 1; }
+    .stat-chip .lbl { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-top: 3px; font-weight: 600; }
+    /* Filters */
+    .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .filter-row select, .filter-row input { flex: 1; min-width: 120px; border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: .88rem; outline: none; background: #fafafa; }
+    .filter-row select:focus, .filter-row input:focus { border-color: var(--accent); }
+    /* Leads table */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    th { background: #f9fafb; color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .4px; padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 11px 12px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafbff; }
+    .badge { display: inline-block; border-radius: 4px; padding: 2px 8px; font-size: .72rem; font-weight: 700; }
+    .badge.sim { background: #f0fdf4; color: #16a34a; }
+    .badge.nao { background: #fff1f4; color: var(--accent); }
+    /* Vendedores */
+    .vendedor-list { display: flex; flex-direction: column; gap: 10px; }
+    .vendedor-item { display: flex; align-items: center; justify-content: space-between; background: #fafafa; border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+    .vendedor-info .nome { font-weight: 700; font-size: .95rem; }
+    .vendedor-info .email { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+    .vendedor-info .leads-count { font-size: .75rem; color: #16a34a; font-weight: 600; margin-top: 4px; }
+    .btn-del { background: none; border: 1.5px solid #fca5a5; color: #ef4444; border-radius: 8px; padding: 6px 12px; font-size: .78rem; font-weight: 600; cursor: pointer; }
+    .btn-del:hover { background: #fff1f1; }
+    /* Add vendedor form */
+    .form-add { display: flex; flex-direction: column; gap: 12px; }
+    .form-add input { border: 1.5px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: .95rem; outline: none; transition: border-color .2s; }
+    .form-add input:focus { border-color: var(--accent); }
+    .btn-add { background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 13px; font-size: .95rem; font-weight: 700; cursor: pointer; transition: background .2s; }
+    .btn-add:hover { background: #d63651; }
+    .btn-add:disabled { background: #f4a0ad; cursor: not-allowed; }
+    /* Export */
+    .btn-export { display: flex; align-items: center; justify-content: center; gap: 8px; background: #217346; color: #fff; border: none; border-radius: 10px; padding: 12px; width: 100%; font-size: .9rem; font-weight: 700; cursor: pointer; margin-bottom: 14px; transition: background .2s; }
+    .btn-export:hover { background: #1a5c37; }
+    .empty { text-align: center; color: var(--muted); font-size: .9rem; padding: 24px 0; }
+    .loading { text-align: center; padding: 20px; color: var(--muted); }
+    #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1a1a2e; color: #fff; padding: 10px 20px; border-radius: 50px; font-size: .85rem; font-weight: 600; transition: transform .3s; z-index: 100; white-space: nowrap; }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    .success-msg { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; font-size: .85rem; display: none; }
+    .success-msg.show { display: block; }
+    .error-msg { background: #fff1f4; color: var(--accent); border: 1px solid #f4a0ad; border-radius: 8px; padding: 10px 14px; font-size: .85rem; display: none; }
+    .error-msg.show { display: block; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>⚙️ Painel do Gestor</h1>
+    <p id="header-name">CRM Posto — Proteção Veicular</p>
+  </div>
+  <button class="btn-sair" onclick="sair()">Sair</button>
+</header>
+
+<div class="tabs">
+  <div class="tab active" id="tab-leads"     onclick="showTab('leads')">📋 Todos os Leads</div>
+  <div class="tab"        id="tab-vendedores" onclick="showTab('vendedores')">👥 Vendedores</div>
+</div>
+
+<main>
+
+  <!-- TAB: Todos os Leads -->
+  <div id="section-leads">
+
+    <div class="card">
+      <div class="stats-grid">
+        <div class="stat-chip"><div class="num" id="stat-hoje">0</div><div class="lbl">Hoje</div></div>
+        <div class="stat-chip"><div class="num" id="stat-semana">0</div><div class="lbl">Semana</div></div>
+        <div class="stat-chip"><div class="num" id="stat-total">0</div><div class="lbl">Total</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="filter-row">
+        <select id="filtro-vendedor">
+          <option value="">Todos os vendedores</option>
+        </select>
+        <select id="filtro-seguro">
+          <option value="">Todos (seguro)</option>
+          <option value="sim">Com seguro</option>
+          <option value="nao">Sem seguro</option>
+        </select>
+        <input type="date" id="filtro-data" />
+      </div>
+      <button class="btn-export" onclick="exportarExcel()">📊 Exportar para Excel</button>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Telefone</th>
+              <th>Placa</th>
+              <th>Seguro</th>
+              <th>Valor</th>
+              <th>Vendedor</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody id="leads-tbody">
+            <tr><td colspan="7" class="loading">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB: Vendedores -->
+  <div id="section-vendedores" style="display:none">
+
+    <div class="card">
+      <h2>➕ Cadastrar Vendedor</h2>
+      <div class="form-add">
+        <input type="text"     id="v-nome"  placeholder="Nome completo" />
+        <input type="email"    id="v-email" placeholder="E-mail" />
+        <input type="password" id="v-senha" placeholder="Senha (mínimo 6 caracteres)" />
+        <button class="btn-add" id="btn-add-v" onclick="cadastrarVendedor()">Cadastrar</button>
+        <div class="success-msg" id="success-v"></div>
+        <div class="error-msg"   id="error-v"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>👥 Vendedores Ativos</h2>
+      <div class="vendedor-list" id="vendedor-list">
+        <div class="loading">Carregando...</div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<script src="config.js"></script>
+<script>
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let currentUser = null;
+  let todosLeads  = [];
+  let vendedores  = {};
+
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = '/login.html'; return; }
+    currentUser = session.user;
+
+    const { data: perfil } = await sb.from('perfis').select('*').eq('id', currentUser.id).single();
+    if (!perfil || perfil.role !== 'gestor') { window.location.href = '/vendedor.html'; return; }
+    document.getElementById('header-name').textContent = perfil.nome;
+
+    await loadVendedoresMap();
+    await loadLeads();
+  }
+
+  async function sair() {
+    await sb.auth.signOut();
+    window.location.href = '/login.html';
+  }
+
+  // ── Tabs
+  function showTab(tab) {
+    document.getElementById('section-leads').style.display      = tab === 'leads'      ? '' : 'none';
+    document.getElementById('section-vendedores').style.display = tab === 'vendedores' ? '' : 'none';
+    document.getElementById('tab-leads').className      = 'tab' + (tab === 'leads'      ? ' active' : '');
+    document.getElementById('tab-vendedores').className = 'tab' + (tab === 'vendedores' ? ' active' : '');
+    if (tab === 'vendedores') loadVendedoresList();
+  }
+
+  // ── Vendedores map (id → nome)
+  async function loadVendedoresMap() {
+    const { data } = await sb.from('perfis').select('id, nome').eq('role', 'vendedor');
+    vendedores = {};
+    (data || []).forEach(v => { vendedores[v.id] = v.nome; });
+
+    const sel = document.getElementById('filtro-vendedor');
+    Object.entries(vendedores).forEach(([id, nome]) => {
+      const opt = document.createElement('option');
+      opt.value = id; opt.textContent = nome;
+      sel.appendChild(opt);
+    });
+  }
+
+  // ── Leads
+  async function loadLeads() {
+    const { data } = await sb.from('leads').select('*').order('criado_em', { ascending: false });
+    todosLeads = data || [];
+
+    // Stats
+    const hoje   = new Date().toISOString().slice(0, 10);
+    const semana = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+    document.getElementById('stat-hoje').textContent   = todosLeads.filter(l => l.criado_em?.startsWith(hoje)).length;
+    document.getElementById('stat-semana').textContent = todosLeads.filter(l => l.criado_em >= semana + 'T00:00:00').length;
+    document.getElementById('stat-total').textContent  = todosLeads.length;
+
+    renderLeads();
+
+    // Live filters
+    ['filtro-vendedor', 'filtro-seguro', 'filtro-data'].forEach(id => {
+      document.getElementById(id).addEventListener('change', renderLeads);
+    });
+  }
+
+  function renderLeads() {
+    const vFiltro = document.getElementById('filtro-vendedor').value;
+    const sFiltro = document.getElementById('filtro-seguro').value;
+    const dFiltro = document.getElementById('filtro-data').value;
+
+    let lista = todosLeads.filter(l => {
+      if (vFiltro && l.vendedor_id !== vFiltro) return false;
+      if (sFiltro && l.seguro !== sFiltro) return false;
+      if (dFiltro && !l.criado_em?.startsWith(dFiltro)) return false;
+      return true;
+    });
+
+    const tbody = document.getElementById('leads-tbody');
+    if (!lista.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">Nenhum lead encontrado.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = lista.map(l => `
+      <tr>
+        <td><strong>${l.nome}</strong></td>
+        <td>${formatPhone(l.telefone)}</td>
+        <td>${l.placa}</td>
+        <td><span class="badge ${l.seguro}">${l.seguro === 'sim' ? '✅ Sim' : '❌ Não'}</span></td>
+        <td>${l.valor_seguro || '—'}</td>
+        <td>${vendedores[l.vendedor_id] || '—'}</td>
+        <td>${formatDate(l.criado_em)}</td>
+      </tr>
+    `).join('');
+  }
+
+  // ── Exportar Excel
+  function exportarExcel() {
+    const vFiltro = document.getElementById('filtro-vendedor').value;
+    const sFiltro = document.getElementById('filtro-seguro').value;
+    const dFiltro = document.getElementById('filtro-data').value;
+
+    let lista = todosLeads.filter(l => {
+      if (vFiltro && l.vendedor_id !== vFiltro) return false;
+      if (sFiltro && l.seguro !== sFiltro) return false;
+      if (dFiltro && !l.criado_em?.startsWith(dFiltro)) return false;
+      return true;
+    });
+
+    if (!lista.length) return alert('Nenhum lead para exportar.');
+
+    const rows = lista.map(l => ({
+      Nome:            l.nome,
+      Telefone:        formatPhone(l.telefone),
+      Placa:           l.placa,
+      'Possui Seguro': l.seguro === 'sim' ? 'Sim' : 'Não',
+      'Valor Seguro':  l.valor_seguro || '',
+      Vendedor:        vendedores[l.vendedor_id] || '',
+      Data:            formatDate(l.criado_em),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Leads');
+    XLSX.writeFile(wb, `leads_geral_${new Date().toISOString().slice(0,10)}.xlsx`);
+  }
+
+  // ── Lista de vendedores
+  async function loadVendedoresList() {
+    const { data } = await sb.from('perfis').select('id, nome, email').eq('role', 'vendedor');
+    const list = document.getElementById('vendedor-list');
+
+    if (!data?.length) { list.innerHTML = '<div class="empty">Nenhum vendedor cadastrado.</div>'; return; }
+
+    // Conta leads por vendedor
+    const counts = {};
+    todosLeads.forEach(l => { counts[l.vendedor_id] = (counts[l.vendedor_id] || 0) + 1; });
+
+    list.innerHTML = data.map(v => `
+      <div class="vendedor-item">
+        <div class="vendedor-info">
+          <div class="nome">${v.nome}</div>
+          <div class="email">${v.email}</div>
+          <div class="leads-count">📋 ${counts[v.id] || 0} leads</div>
+        </div>
+        <button class="btn-del" onclick="removerVendedor('${v.id}', '${v.nome}')">Remover</button>
+      </div>
+    `).join('');
+  }
+
+  // ── Cadastrar vendedor
+  async function cadastrarVendedor() {
+    const nome  = document.getElementById('v-nome').value.trim();
+    const email = document.getElementById('v-email').value.trim();
+    const senha = document.getElementById('v-senha').value;
+    const btn   = document.getElementById('btn-add-v');
+    const succ  = document.getElementById('success-v');
+    const err   = document.getElementById('error-v');
+
+    succ.classList.remove('show');
+    err.classList.remove('show');
+
+    if (!nome || !email || senha.length < 6) {
+      err.textContent = 'Preencha todos os campos. Senha mínima: 6 caracteres.';
+      err.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true; btn.textContent = 'Cadastrando...';
+
+    const { data, error } = await sb.functions.invoke('criar-vendedor', {
+      body: { nome, email, senha }
+    });
+
+    btn.disabled = false; btn.textContent = 'Cadastrar';
+
+    if (error || data?.error) {
+      err.textContent = data?.error || 'Erro ao cadastrar. Tente novamente.';
+      err.classList.add('show');
+      return;
+    }
+
+    succ.textContent = `✅ Vendedor "${nome}" cadastrado com sucesso!`;
+    succ.classList.add('show');
+    document.getElementById('v-nome').value  = '';
+    document.getElementById('v-email').value = '';
+    document.getElementById('v-senha').value = '';
+
+    await loadVendedoresMap();
+    await loadVendedoresList();
+  }
+
+  // ── Remover vendedor
+  async function removerVendedor(id, nome) {
+    if (!confirm(`Remover o vendedor "${nome}"? Os leads dele serão mantidos.`)) return;
+
+    const { error } = await sb.functions.invoke('remover-vendedor', { body: { id } });
+
+    if (error) { alert('Erro ao remover vendedor.'); return; }
+
+    showToast(`✅ ${nome} removido`);
+    await loadVendedoresMap();
+    await loadVendedoresList();
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function formatPhone(t) {
+    if (!t) return '-';
+    t = t.replace(/\D/g, '');
+    if (t.length === 11) return `(${t.slice(0,2)}) ${t.slice(2,3)} ${t.slice(3,7)}-${t.slice(7)}`;
+    if (t.length === 10) return `(${t.slice(0,2)}) ${t.slice(2,6)}-${t.slice(6)}`;
+    return t;
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  init();
+</script>
+</body>
+</html>
